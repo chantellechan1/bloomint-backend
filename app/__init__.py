@@ -1,50 +1,45 @@
-import os
+from flask import Flask
 
-from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from werkzeug.exceptions import HTTPException
-
-# instantiate extensions
-login_manager = LoginManager()
-db = SQLAlchemy()
+# db imports
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
-def create_app(environment='development'):
+def init_db(flask_app: Flask, db_conn_string: str) -> None:
+    global engine
+    global Base
+    global Session
 
-    from config import config
-    from .views import main_blueprint
-    from .auth.views import auth_blueprint
-    from .auth.models import User, AnonymousUser
+    engine = create_engine(db_conn_string, echo=True)
+    Base = declarative_base()
+    Session = sessionmaker(bind=engine)
 
-    # Instantiate app.
-    app = Flask(__name__)
+    from .auth import models as auth_models
 
-    # Set app config.
-    env = os.environ.get('FLASK_ENV', environment)
-    app.config.from_object(config[env])
-    config[env].configure(app)
+    auth_models.init_auth_models(Base)
 
-    # Set up extensions.
-    db.init_app(app)
-    login_manager.init_app(app)
+    Base.metadata.create_all(engine)
 
-    # Register blueprints.
-    app.register_blueprint(auth_blueprint)
-    app.register_blueprint(main_blueprint)
+def create_session():
+    new_session = Session()
+    return new_session
 
-    # Set up flask login.
-    @login_manager.user_loader
-    def get_user(id):
-        return User.query.get(int(id))
+def init_app() -> None:
+    """initializes the app ¯\_(ツ)_/¯"""
+    app = Flask(__name__, instance_relative_config=True)
 
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
-    login_manager.anonymous_user = AnonymousUser
+    # Confused? https://exploreflask.com/en/latest/configuration.html
+    # these lines import both config.py and /instance/config.py where all the secrets are stored
+    app.config.from_object('config')
+    app.config.from_pyfile('config.py')
 
-    # Error handlers.
-    @app.errorhandler(HTTPException)
-    def handle_http_error(exc):
-        return render_template('error.html', error=exc), exc.code
+    # initialize the postgres db
+    init_db(flask_app=app, db_conn_string=app.config['DB_CONN_STRING'])
 
-    return app
+    with app.app_context():
+        from .auth import routes as auth_routes
+
+        app.register_blueprint(auth_routes.auth_blueprint)
+
+        return app
