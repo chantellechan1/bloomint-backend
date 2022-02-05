@@ -47,6 +47,12 @@ def create_user():
     email = req_body['email']
     password = req_body['password']
 
+    min_password_length = current_app.config['MIN_PASSWORD_LENGTH']
+    max_password_length = current_app.config['MAX_PASSWORD_LENGTH']
+    if len(password) < min_password_length or len(password) > max_password_length:
+        res = current_app.make_response((f'Password length must be between {min_password_length} and {max_password_length}',
+            current_app.config['BAD_REQUEST']))
+        return res
     try:
         db_session = create_session()
 

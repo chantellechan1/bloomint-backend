@@ -7,7 +7,7 @@ then
 fi
 
 EMAIL=$1
-PASSWORD=hector
+PASSWORD=hector_hector_hector
 URL=localhost:5000
 
 
