@@ -11,7 +11,7 @@ You should create and activate a virtual environment before doing anything:
 * on macos, run `brew install postgres` before pip install
 
 ### running on the server
-`flask run --host=0.0.0.0`
+`python3 wsgi.py`
 
 ### database stuff
 db is running on the same EC2 t2.medium instance as the server, db is named hectordb  
