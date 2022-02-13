@@ -1,0 +1,6 @@
+source ~/.screenrc
+sessionname bloomint
+screen -t 'vim' 0 bash --rcfile scripts/vim_bashrc
+screen -t 'python' 1 bash --rcfile scripts/python_bashrc
+screen -t 'bash' 2 bash --rcfile  scripts/bashrc
+select 0
