@@ -1,8 +1,10 @@
 from flask import Blueprint, request, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
+import time
 import jwt
 from .. import create_session
+from .. import utils
 from . import models
 
 auth_blueprint = Blueprint('auth', __name__)
@@ -14,19 +16,24 @@ def login():
     password = req_body['password']
     try:
         db_session = create_session()
-        result = db_session.query(models.User).filter(models.User.email==email).first()
-        stored_hash = result.hashed_password
-        res = current_app.make_response(({'user_hash': stored_hash}, current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
+        user = db_session.query(models.User).filter(models.User.email==email and models.User.deleted_at is None).first()
+
+        if user is None:
+            raise Exception("Failed to find user")
         
-        if check_password_hash(stored_hash, password + current_app.config['PEPPER']):
+        if check_password_hash(user.hashed_password, password + current_app.config['PEPPER']):
             current_datetime = datetime.datetime.utcnow()
             expiry_datetime = current_datetime + current_app.config['JWT_TIME_DIFF']
+            unix_expiry_datetime = time.mktime(expiry_datetime.timetuple())
             payload = {
                 'email': email,
-                'exp': str(expiry_datetime)
+                'exp': unix_expiry_datetime
             }
             encoded_jwt = jwt.encode(
-                payload, current_app.config['JWT_SECRET'], algorithm=current_app.config['JWT_ALG'])
+                payload=payload,
+                key=current_app.config['JWT_SECRET'],
+                algorithm=current_app.config['JWT_ALG'])
+
             res = current_app.make_response(({'token': encoded_jwt}, current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
         else:
             res = current_app.make_response(('Login Failed', current_app.config['HTTP_STATUS_CODES']['UNAUTHORIZED']))
@@ -67,4 +74,30 @@ def create_user():
     except:
         res = current_app.make_response(('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['BAD_REQUEST']))
 
+    return res
+
+@auth_blueprint.route('/auth/delete_user', methods=['POST'])
+def delete_user():
+    req_body = request.get_json()
+    password = req_body['password']
+    try:
+        email = utils.try_get_user_email(request)
+
+        db_session = create_session()
+        user = db_session.query(models.User).filter(models.User.email==email).first()
+        if user is None:
+            raise Exception("Failed to find user")
+
+        if user.deleted_at is not None:
+            raise Exception("User already deleted")
+
+        if not check_password_hash(user.hashed_password, password + current_app.config['PEPPER']):
+            raise Exception("invalid password")
+
+        user.deleted_at = datetime.datetime.utcnow()
+        db_session.commit()
+
+        res = current_app.make_response(('Success', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
+    except:
+        res = current_app.make_response(('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['BAD_REQUEST']))
     return res
