@@ -16,8 +16,10 @@ def init_db(flask_app: Flask, db_conn_string: str) -> None:
     Session = sessionmaker(bind=engine)
 
     from .auth import models as auth_models
+    from .plant import models as plant_models
 
     auth_models.init_auth_models(Base)
+    plant_models.init_plants_models(Base)
 
     Base.metadata.create_all(engine)
 
@@ -39,7 +41,9 @@ def init_app() -> None:
 
     with app.app_context():
         from .auth import routes as auth_routes
+        from .plant import routes as plant_routes
 
         app.register_blueprint(auth_routes.auth_blueprint)
+        app.register_blueprint(plant_routes.plant_blueprint)
 
         return app

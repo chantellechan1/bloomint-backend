@@ -7,8 +7,8 @@ You should create and activate a virtual environment before doing anything:
 2. `source ./venv/bin/activate`
 
 ### install dependencies
-`pip install -r requirements.txt`
 * on macos, run `brew install postgres` before pip install
+`pip install -r requirements.txt`
 
 ### running on the server
 `python3 wsgi.py`
