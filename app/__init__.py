@@ -23,9 +23,11 @@ def init_db(flask_app: Flask, db_conn_string: str) -> None:
 
     Base.metadata.create_all(engine)
 
+
 def create_session():
     new_session = Session()
     return new_session
+
 
 def init_app() -> None:
     """initializes the app ¯\_(ツ)_/¯"""

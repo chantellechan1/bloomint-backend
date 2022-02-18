@@ -1,6 +1,7 @@
-from sqlalchemy import  Column, ForeignKey, Integer, String, DateTime, Boolean, null
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, null
 
-from ..auth import models # for User model
+from ..auth import models  # for User model
+
 
 def init_plants_models(Base):
     global Plant
@@ -12,9 +13,10 @@ def init_plants_models(Base):
         id = Column(Integer, primary_key=True)
         name = Column(String(512), nullable=False)
         sunlight = Column(String(512), nullable=False)
-        min_temp = Column(Integer, nullable=False) # temperature in Celcius
-        max_temp = Column(Integer, nullable=False) # temperature in Celcius
-        water_frequency = Column(Integer, nullable=False) # how frequently to water in days
+        min_temp = Column(Integer, nullable=False)  # temperature in Celcius
+        max_temp = Column(Integer, nullable=False)  # temperature in Celcius
+        # how frequently to water in days
+        water_frequency = Column(Integer, nullable=False)
         created_at = Column(DateTime, nullable=False)
         deleted_at = Column(DateTime, nullable=True)
         # edible = Column(Boolean, nullable=False)
