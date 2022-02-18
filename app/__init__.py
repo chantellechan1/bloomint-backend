@@ -30,11 +30,12 @@ def create_session():
 
 
 def init_app() -> None:
-    """initializes the app ¯\_(ツ)_/¯"""
+    """initializes the app ¯\\_(ツ)_/¯"""
     app = Flask(__name__, instance_relative_config=True)
 
     # Confused? https://exploreflask.com/en/latest/configuration.html
-    # these lines import both config.py and /instance/config.py where all the secrets are stored
+    # these lines import both config.py and /instance/config.py where all the
+    # secrets are stored
     app.config.from_object('config')
     app.config.from_pyfile('config.py')
 

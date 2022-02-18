@@ -20,7 +20,8 @@ def init_plants_models(Base):
         created_at = Column(DateTime, nullable=False)
         deleted_at = Column(DateTime, nullable=True)
         # edible = Column(Boolean, nullable=False)
-        # fertilizer_frequency = Column(Integer, nullable=False) # how frequently to fertilize in days
+        # fertilizer_frequency = Column(Integer, nullable=False) # how
+        # frequently to fertilize in days
 
         def __repr__(self):
             return f'<Plant> {self.name}'

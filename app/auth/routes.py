@@ -23,7 +23,8 @@ def login():
         if user is None:
             raise Exception("Failed to find user")
 
-        if check_password_hash(user.hashed_password, password + current_app.config['PEPPER']):
+        if check_password_hash(user.hashed_password,
+                               password + current_app.config['PEPPER']):
             current_datetime = datetime.datetime.utcnow()
             expiry_datetime = current_datetime + \
                 current_app.config['JWT_TIME_DIFF']
@@ -42,7 +43,7 @@ def login():
         else:
             res = current_app.make_response(
                 ('Login Failed', current_app.config['HTTP_STATUS_CODES']['UNAUTHORIZED']))
-    except:
+    except BaseException:
         res = current_app.make_response(
             ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
     return res
@@ -56,7 +57,8 @@ def create_user():
 
     min_password_length = current_app.config['MIN_PASSWORD_LENGTH']
     max_password_length = current_app.config['MAX_PASSWORD_LENGTH']
-    if len(password) < min_password_length or len(password) > max_password_length:
+    if len(password) < min_password_length or len(
+            password) > max_password_length:
         res = current_app.make_response((f'Password length must be between {min_password_length} and {max_password_length}',
                                          current_app.config['BAD_REQUEST']))
         return res
@@ -87,7 +89,7 @@ def create_user():
 
         res = current_app.make_response(
             ('Success', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
-    except:
+    except BaseException:
         res = current_app.make_response(
             ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['BAD_REQUEST']))
 
@@ -110,7 +112,8 @@ def delete_user():
         if user.deleted_at is not None:
             raise Exception("User already deleted")
 
-        if not check_password_hash(user.hashed_password, password + current_app.config['PEPPER']):
+        if not check_password_hash(
+                user.hashed_password, password + current_app.config['PEPPER']):
             raise Exception("invalid password")
 
         user.deleted_at = datetime.datetime.utcnow()
@@ -118,7 +121,7 @@ def delete_user():
 
         res = current_app.make_response(
             ('Success', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
-    except:
+    except BaseException:
         res = current_app.make_response(
             ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['BAD_REQUEST']))
     return res
