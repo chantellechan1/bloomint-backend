@@ -65,10 +65,10 @@ def create_user():
     try:
         db_session = create_session()
 
-        # TODO: check if user exists already
-        # result = db_session.query(User).filter(User.email==email).first()
-
-        # TODO: check password min/max length
+        # check if user exists already
+        existing_user = db_session.query(models.User).filter(models.User.email==email).first()
+        if existing_user is not None:
+            raise Exception(f"error, user with email {email} already exists")
 
         # create hashed password
         hashed_password = generate_password_hash(
@@ -89,7 +89,8 @@ def create_user():
 
         res = current_app.make_response(
             ('Success', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
-    except BaseException:
+    except BaseException as e:
+        print(e.args)
         res = current_app.make_response(
             ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['BAD_REQUEST']))
 

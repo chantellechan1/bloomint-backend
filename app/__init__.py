@@ -6,12 +6,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 
-def init_db(flask_app: Flask, db_conn_string: str) -> None:
+def init_db(flask_app: Flask, db_conn_string: str, db_echo: bool) -> None:
     global engine
     global Base
     global Session
 
-    engine = create_engine(db_conn_string, echo=True)
+    engine = create_engine(db_conn_string, echo=db_echo)
     Base = declarative_base()
     Session = sessionmaker(bind=engine)
 
@@ -40,7 +40,8 @@ def init_app() -> None:
     app.config.from_pyfile('config.py')
 
     # initialize the postgres db
-    init_db(flask_app=app, db_conn_string=app.config['DB_CONN_STRING'])
+    init_db(flask_app=app, db_conn_string=app.config['DB_CONN_STRING'],
+            db_echo=app.config['DB_ECHO'])
 
     with app.app_context():
         from .auth import routes as auth_routes
