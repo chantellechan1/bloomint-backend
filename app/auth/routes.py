@@ -3,6 +3,7 @@ from flask import Blueprint, request, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from .. import create_session
 from .. import utils
+from .. import emailer
 from . import models
 from http import HTTPStatus
 
@@ -29,7 +30,7 @@ def login():
                 timediff=current_app.config['JWT_LOGIN_EXPIRY'])
 
             res = current_app.make_response(
-                ({'token': encoded_jwt}, HTTPStatus.OK))
+                ({'jwt': encoded_jwt}, HTTPStatus.OK))
         else:
             res = current_app.make_response(
                 ('Login Failed', HTTPStatus.UNAUTHORIZED))
@@ -65,13 +66,21 @@ def create_user():
         jwt = utils.create_jwt(
             email=email,
             timediff=current_app.config['JWT_EMAIL_VERIFICATION_EXPIRY'])
-        utils.send_email("Bloomint verification email",
-                         f"Click this link to verify your \
-                         email address: {utils.get_base_address()}/static/authorize?jwt={jwt}",
-                         email)
 
-        res = current_app.make_response(
-            ('Success', HTTPStatus.OK))
+        if utils.get_flask_env() == utils.FlaskEnv.TEST:
+            # When we run the test, it's too painful to set up the email stuff.
+            # Just return the jwt in the response so they confirm their email
+            # address and set their password
+            res = current_app.make_response(
+                ({'jwt': jwt}, HTTPStatus.OK))
+        else:
+            emailer.send_email("Bloomint verification email",
+                               f"Click this link to verify your \
+                               email address: {utils.get_base_address()}/static/authorize?jwt={jwt}",
+                               email)
+
+            res = current_app.make_response(
+                ('Success', HTTPStatus.OK))
     except BaseException as e:
         print(e.args)
         res = current_app.make_response(

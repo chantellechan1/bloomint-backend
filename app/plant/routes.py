@@ -167,7 +167,6 @@ def findPlantTypes():
 # the number of each type of plant they own
 @plant_blueprint.route('/plants/user/plant_types', methods=['GET'])
 def allUserPlantTypes():
-
     # TODO: implement pagination so only 10 plant types are returned at once
     # 10 was picked as a reasonable number of plant types to look at on one
     # page
@@ -218,6 +217,7 @@ def allUserPlantTypes():
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
     return res
 
+
 # return all plant types (regardless of whether a user owns a plant of this type)
 @plant_blueprint.route('/plants/plant_types/all', methods=['GET'])
 def plantTypesAll():
@@ -239,7 +239,6 @@ def plantTypesAll():
         # get plants from plant_ids
         # the <Column>.in_() functions expects a list of acceptable plant ids
         userPlants = db_session.query(plant_models.Plant).filter(
-            plant_models.Plant.id.in_(plant_ids),
             plant_models.Plant.deleted_at == None  # noqa
         )
 
@@ -421,10 +420,14 @@ def updatePlants():
             ).first()
 
             # update plant properties
-            db_plant.plant_id = updated_plant['plant_id']
-            db_plant.plant_name = updated_plant['plant_name']
-            db_plant.notes = updated_plant['notes']
-            db_plant.purchased_at = updated_plant['purchased_at']
+            if 'plant_id' in updated_plant:
+                db_plant.plant_id = updated_plant['plant_id']
+            if 'plant_name' in updated_plant:
+                db_plant.plant_name = updated_plant['plant_name']
+            if 'notes' in updated_plant:
+                db_plant.notes = updated_plant['notes']
+            if 'purchased_at' in updated_plant:
+                db_plant.purchased_at = updated_plant['purchased_at']
 
             # commit changes
             db_session.commit()

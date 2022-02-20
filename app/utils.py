@@ -1,19 +1,39 @@
 from flask import current_app
+from enum import Enum
 import jwt
 import datetime
 import time
-import smtplib
+import os
 
-SMTP_SERVER = current_app.config['SMTP_SERVER']
-SMTP_PORT = current_app.config['SMTP_SERVER_PORT']
-SMTP_SENDER_EMAIL = current_app.config['SMTP_SENDER_EMAIL']
 
-SMTP_USE_SSL = current_app.config['SMTP_USE_SSL']
-SMTP_SENDER_PASSWORD = current_app.config['SMTP_SENDER_PASSWORD']
+def get_flask_env():
+    global FlaskEnv
 
-if SMTP_USE_SSL:
-    import ssl
-    ssl_context = ssl.create_default_context()
+    class FlaskEnv(Enum):
+        PRODUCTION = 1
+        DEVELOPMENT = 2
+        TEST = 3
+
+    flask_env = os.environ.get('FLASK_ENV')
+    if flask_env == 'test':
+        return FlaskEnv.TEST
+    elif flask_env == 'development':
+        return FlaskEnv.DEVELOPMENT
+    elif flask_env == 'production':
+        return FlaskEnv.PRODUCTION
+    else:
+        # default to development,
+        # it's safe
+        return FlaskEnv.DEVELOPMENT
+
+
+def try_get_user_email(request) -> str:
+    jwt_token = request.headers.get('Authorization').split()[1].strip('"')
+    jwt_payload = jwt.decode(jwt_token,
+                             key=current_app.config['JWT_SECRET'],
+                             algorithms=[current_app.config['JWT_ALG']])
+    email = jwt_payload['email']
+    return email
 
 
 def create_jwt(email: str, timediff: datetime.timedelta) -> str:
@@ -31,29 +51,6 @@ def create_jwt(email: str, timediff: datetime.timedelta) -> str:
     return encoded_jwt
 
 
-def try_get_user_email(request) -> str:
-    jwt_token = request.headers.get('Authorization').split()[1].strip('"')
-    jwt_payload = jwt.decode(jwt_token,
-                             key=current_app.config['JWT_SECRET'],
-                             algorithms=[current_app.config['JWT_ALG']])
-    email = jwt_payload['email']
-    return email
-
-
-def send_email(subject: str, body: str, recipient: str):
-    # This is the formatting required to make the
-    # subject show up in the subject box
-    message = f"Subject: {subject}\n\n{body}"
-
-    if SMTP_USE_SSL:
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=ssl_context) as server:
-            server.login(SMTP_SENDER_EMAIL, SMTP_SENDER_PASSWORD)
-            server.sendmail(SMTP_SENDER_EMAIL, recipient, message)
-    else:
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.sendmail(SMTP_SENDER_EMAIL, recipient, message)
-
-
 def get_base_address() -> str:
     # TODO: this is wrong
-    return "localhost:5000"
+    return 'localhost:5000'
