@@ -1,4 +1,4 @@
-from sqlalchemy import  Column, ForeignKey, Integer, String, DateTime, Boolean, null, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, null, Text
 
 from ..auth import models  # for User model
 
