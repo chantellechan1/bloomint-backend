@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, null
+from sqlalchemy import  Column, ForeignKey, Integer, String, DateTime, Boolean, null, Text
 
 from ..auth import models  # for User model
 
@@ -31,9 +31,11 @@ def init_plants_models(Base):
         id = Column(Integer, primary_key=True)
         user_id = Column(Integer, ForeignKey('Users.id'))
         plant_id = Column(Integer, ForeignKey('Plants.id'))
+        plant_name = Column(String(256))
+        notes = Column(Text)
+        purchased_at = Column(DateTime, nullable=True)
         created_at = Column(DateTime, nullable=False)
         deleted_at = Column(DateTime, nullable=True)
-        # purchase_date = Column(DateTime, nullable=False)
 
         def __repr__(self):
             return f'<UsersPlants> {self.id}'
