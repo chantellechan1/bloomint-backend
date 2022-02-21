@@ -1,0 +1,30 @@
+<title>Bloomint Email Verification</title>
+
+<div>
+    <label for='pwd'>Provide password for new account:</label><br>
+    <input type='password' id='pwd' name='pwd'>
+    <button onclick="sendPostToServerToRegisterUser()">Register</button> 
+</div>
+
+<script>
+function sendPostToServerToRegisterUser() {
+	const endpoint = '/auth/verify_user';
+	
+	const data = {
+	    password: document.getElementById('pwd').value
+	};
+	
+	const options = {
+	    method: 'POST',
+	    body: JSON.stringify(data),
+	    headers: {
+	        'Content-Type': 'application/json',
+			'Authorization': 'Bearer {{jwt}}'
+	    }
+	}
+	
+	fetch(endpoint, options)
+	     .then(res => res.json())
+	     .then(res => console.log(res));
+}
+</script>

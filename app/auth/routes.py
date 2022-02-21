@@ -1,8 +1,6 @@
+import datetime
 from flask import Blueprint, request, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
-import datetime
-import time
-import jwt
 from .. import create_session
 from .. import utils
 from . import models
@@ -26,18 +24,9 @@ def login():
 
         if check_password_hash(user.hashed_password,
                                password + current_app.config['PEPPER']):
-            current_datetime = datetime.datetime.utcnow()
-            expiry_datetime = current_datetime + \
-                current_app.config['JWT_TIME_DIFF']
-            unix_expiry_datetime = time.mktime(expiry_datetime.timetuple())
-            payload = {
-                'email': email,
-                'exp': unix_expiry_datetime
-            }
-            encoded_jwt = jwt.encode(
-                payload=payload,
-                key=current_app.config['JWT_SECRET'],
-                algorithm=current_app.config['JWT_ALG'])
+            encoded_jwt = utils.create_jwt(
+                email=email,
+                timediff=current_app.config['JWT_LOGIN_EXPIRY'])
 
             res = current_app.make_response(
                 ({'token': encoded_jwt}, HTTPStatus.OK))
@@ -52,21 +41,71 @@ def login():
 
 @auth_blueprint.route('/auth/create_user', methods=['POST'])
 def create_user():
+    """ The first step to creating a user.
+    If successful, this ends with an email being
+    sent to the provided email which contains
+    a verification link.
+
+    We don't ask for the password yet, they need to get past
+    email verification first
+    """
     req_body = request.get_json()
     email = req_body['email']
-    password = req_body['password']
-
-    min_password_length = current_app.config['MIN_PASSWORD_LENGTH']
-    max_password_length = current_app.config['MAX_PASSWORD_LENGTH']
-    if len(password) < min_password_length or len(
-            password) > max_password_length:
-        res = current_app.make_response((f'Password length must be between {min_password_length} and {max_password_length}',
-                                         HTTPStatus.BAD_REQUEST))
-        return res
     try:
         db_session = create_session()
 
         # check if user exists already
+        existing_user = db_session.query(
+            models.User).filter(
+            models.User.email == email).first()
+        if existing_user is not None:
+            raise Exception(f"error, user with email {email} already exists")
+
+        # send them the email with the jwt
+        jwt = utils.create_jwt(
+            email=email,
+            timediff=current_app.config['JWT_EMAIL_VERIFICATION_EXPIRY'])
+        utils.send_email("Bloomint verification email",
+                         f"Click this link to verify your \
+                         email address: {utils.get_base_address()}/static/authorize?jwt={jwt}",
+                         email)
+
+        res = current_app.make_response(
+            ('Success', HTTPStatus.OK))
+    except BaseException as e:
+        print(e.args)
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+
+    return res
+
+
+@auth_blueprint.route('/auth/verify_user', methods=['POST'])
+def verify_user():
+    """ Confirm the users email is legit,
+    grab their password here,
+    and finally add the new user into the database.
+    """
+    try:
+        req_body = request.get_json()
+        password = req_body['password']
+        email = utils.try_get_user_email(request)
+
+        min_password_length = current_app.config['MIN_PASSWORD_LENGTH']
+        max_password_length = current_app.config['MAX_PASSWORD_LENGTH']
+        if len(password) < min_password_length or len(
+                password) > max_password_length:
+            res = current_app.make_response((f'Password length must be between {min_password_length} and {max_password_length}',
+                                             current_app.config['BAD_REQUEST']))
+            return res
+
+        db_session = create_session()
+
+        # check if user exists already
+        # we check again here. It's unlikely
+        # but possible that someone took the email between
+        # the time we sent the verification email, and the time
+        # they actually click it and end up here.
         existing_user = db_session.query(
             models.User).filter(
             models.User.email == email).first()
@@ -92,12 +131,12 @@ def create_user():
 
         res = current_app.make_response(
             ('Success', HTTPStatus.OK))
+        return res
     except BaseException as e:
         print(e.args)
         res = current_app.make_response(
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
-
-    return res
+    return None
 
 
 @auth_blueprint.route('/auth/delete_user', methods=['POST'])

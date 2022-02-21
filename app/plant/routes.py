@@ -11,6 +11,8 @@ plant_blueprint = Blueprint('plant', __name__)
 
 
 # local utils
+
+
 def get_user_id_from_email(db_session, email) -> int:
     user = db_session.query(
         auth_models.User).filter(
@@ -66,6 +68,8 @@ def getUserPlantIds():
 
 # route returns list of specific plants owned by a user
 # POST request body should contain array of plant_ids
+
+
 @plant_blueprint.route('/plants/user/get_plants', methods=['POST'])
 def getUserPlants():
     try:
@@ -104,6 +108,8 @@ def getUserPlants():
 
 # this route returns all the types of plants that a user owns, as well as
 # the number of each type of plant they own
+
+
 @plant_blueprint.route('/plants/user/plant_types', methods=['GET'])
 def allUserPlants():
 
@@ -196,6 +202,8 @@ def getPlantsByType():
 
 
 # route to create individual plants
+
+
 @plant_blueprint.route('/plants/user/create', methods=['POST'])
 def createPlants():
     try:
@@ -245,6 +253,8 @@ def createPlants():
 
 # route to delete plants
 # post body expects arrays of userplant_ids
+
+
 @plant_blueprint.route('/plants/user/delete', methods=['POST'])
 def deletePlants():
     try:

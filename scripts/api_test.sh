@@ -12,7 +12,7 @@ URL=localhost:5000
 
 
 # create user
-curl --header "Content-Type: application/json" -d '{"password":"'$PASSWORD'", "email":"'$EMAIL'"}' $URL/auth/create_user
+curl --header "Content-Type: application/json" -d '{"email":"'$EMAIL'"}' $URL/auth/create_user
 
 # login and retrieve jwt
 CURL_LOGIN=$(curl \
