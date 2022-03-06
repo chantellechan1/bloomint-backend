@@ -38,4 +38,4 @@ def init_plants_models(Base):
         deleted_at = Column(DateTime, nullable=True)
 
         def __repr__(self):
-            return f'<UsersPlants> {self.id}'
+            return f'<UsersPlants> {self.id}: {self.plant_name}'
