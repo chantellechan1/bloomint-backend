@@ -35,7 +35,7 @@ def getUserPlantIds():
         result = db_session.query(
             plant_models.UsersPlants).filter(
             plant_models.UsersPlants.user_id == user_id,
-            plant_models.UsersPlants.deleted_at is None)
+            plant_models.UsersPlants.deleted_at == None)
         plant_ids = map(lambda row: row.id, result)
         plant_ids = list(plant_ids)
 
@@ -49,8 +49,6 @@ def getUserPlantIds():
 
 # route returns list of specific plants owned by a user
 # POST request body should contain array of plant_ids
-
-
 @plant_blueprint.route('/plants/user/get_plants', methods=['POST'])
 def getUserPlants():
     try:
@@ -72,7 +70,7 @@ def getUserPlants():
         result = db_session.query(plant_models.UsersPlants).filter(
             plant_models.UsersPlants.user_id == user_id,
             plant_models.UsersPlants.id.in_(plant_ids),
-            plant_models.UsersPlants.deleted_at is None
+            plant_models.UsersPlants.deleted_at == None
         )
 
         def format_plant(plant_row):
@@ -100,8 +98,6 @@ def getUserPlants():
 
 # this route returns all the types of plants that a user owns, as well as
 # the number of each type of plant they own
-
-
 @plant_blueprint.route('/plants/user/plant_types', methods=['GET'])
 def allUserPlants():
 
@@ -204,3 +200,42 @@ def createPlants():
     
     return res
 
+# route to delete plants
+# post body expects arrays of userplant_ids
+@plant_blueprint.route('/plants/user/delete', methods=['POST'])
+def deletePlants():
+    try:
+        req_body = request.get_json()
+        userPlantIDs = req_body['user_plant_ids']
+
+        db_session = create_session()
+
+        # get email from jwt in auth header
+        email = utils.try_get_user_email(request)
+
+        # get user_id from email
+        user_id = get_user_id_from_email(db_session, email)
+        pdb.set_trace()
+        # update deleted_at column in UsersPlants table
+        db_session.query(
+            plant_models.UsersPlants
+        ).filter(
+            plant_models.UsersPlants.user_id == user_id, 
+            plant_models.UsersPlants.id.in_(userPlantIDs), 
+            plant_models.UsersPlants.deleted_at == None
+        ).update(
+            {plant_models.UsersPlants.deleted_at: datetime.datetime.utcnow()},
+            synchronize_session = False
+        )
+
+        #commit changes
+        db_session.commit()
+            
+        res = current_app.make_response(
+            ('success', current_app.config['HTTP_STATUS_CODES']['SUCCESS'])
+        )
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
+    
+    return res
