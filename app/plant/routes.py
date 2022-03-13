@@ -20,6 +20,19 @@ def get_user_id_from_email(db_session, email) -> int:
     return user_id
 
 
+def format_plant(plant_row):
+    formatted_plant = {
+        'id': plant_row.id,
+        'user_id': plant_row.user_id,
+        'plant_id': plant_row.plant_id,
+        'plant_name': plant_row.plant_name,
+        'notes': plant_row.notes,
+        'purchased_at': plant_row.purchased_at,
+        'created_at': plant_row.created_at
+    }
+    return formatted_plant
+
+
 # route returns list of user_plant_ids (ids of unique plants that the user
 # owns)
 @plant_blueprint.route('/plants/user/get_plant_ids', methods=['GET'])
@@ -77,18 +90,6 @@ def getUserPlants():
             plant_models.UsersPlants.deleted_at == None  # noqa
         )
 
-        def format_plant(plant_row):
-            formatted_plant = {
-                'id': plant_row.id,
-                'user_id': plant_row.user_id,
-                'plant_id': plant_row.plant_id,
-                'plant_name': plant_row.plant_name,
-                'notes': plant_row.notes,
-                'purchased_at': plant_row.purchased_at,
-                'created_at': plant_row.created_at
-            }
-            return formatted_plant
-
         plants = map(format_plant, result)
         plants = list(plants)
 
@@ -120,7 +121,7 @@ def allUserPlants():
 
         # get plant_ids from user_ids
         result = db_session.query(plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None) # noqa
+            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None)  # noqa
         plant_ids = map(lambda plant: plant.plant_id, result)
         plant_ids = list(plant_ids)
 
@@ -151,6 +152,43 @@ def allUserPlants():
 
         res = current_app.make_response(
             (jsonify(formattedUserPlants), HTTPStatus.OK))
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+    return res
+
+
+# route returns list of specific plants owned by a user
+# POST request body should contain array of plant_ids
+@plant_blueprint.route('/plants/user/plants_by_type', methods=['POST'])
+def getPlantsByType():
+    try:
+        # get list of plant ids from request body
+        req_body = request.get_json()
+        plant_type_id = req_body['plant_type_id']
+        print(f"plant_type_id: {plant_type_id}")
+
+        db_session = create_session()
+
+        # get email from jwt in auth header
+        email = utils.try_get_user_email(request)
+
+        # get user_id from email
+        user_id = get_user_id_from_email(db_session, email)
+
+        # get plants from user_id and plant_ids
+        result = db_session.query(plant_models.UsersPlants).filter(
+            plant_models.UsersPlants.user_id == user_id,
+            plant_models.UsersPlants.plant_id == plant_type_id,
+            plant_models.UsersPlants.deleted_at == None  # noqa
+        )
+
+        plants = map(format_plant, result)
+        plants = list(plants)
+
+        res = current_app.make_response(
+            (jsonify(plants), HTTPStatus.OK))
+
     except BaseException:
         res = current_app.make_response(
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
