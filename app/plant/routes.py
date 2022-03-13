@@ -15,7 +15,7 @@ def get_user_id_from_email(db_session, email) -> int:
     user = db_session.query(
         auth_models.User).filter(
         auth_models.User.email == email,
-        auth_models.User.deleted_at is None).first()
+        auth_models.User.deleted_at == None).first()  # noqa
     user_id = user.id
     return user_id
 
@@ -38,7 +38,7 @@ def getUserPlantIds():
         result = db_session.query(
             plant_models.UsersPlants).filter(
             plant_models.UsersPlants.user_id == user_id,
-            plant_models.UsersPlants.deleted_at is None)
+            plant_models.UsersPlants.deleted_at == None)  # noqa
         plant_ids = map(lambda row: row.id, result)
         plant_ids = list(plant_ids)
 
@@ -74,7 +74,7 @@ def getUserPlants():
         result = db_session.query(plant_models.UsersPlants).filter(
             plant_models.UsersPlants.user_id == user_id,
             plant_models.UsersPlants.id.in_(plant_ids),
-            plant_models.UsersPlants.deleted_at is None
+            plant_models.UsersPlants.deleted_at == None  # noqa
         )
 
         def format_plant(plant_row):
@@ -120,7 +120,7 @@ def allUserPlants():
 
         # get plant_ids from user_ids
         result = db_session.query(plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at is None)
+            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None) # noqa
         plant_ids = map(lambda plant: plant.plant_id, result)
         plant_ids = list(plant_ids)
 
@@ -128,7 +128,7 @@ def allUserPlants():
         # the <Column>.in_() functions expects a list of acceptable plant ids
         userPlants = db_session.query(plant_models.Plant).filter(
             plant_models.Plant.id.in_(plant_ids),
-            plant_models.Plant.deleted_at is None
+            plant_models.Plant.deleted_at == None  # noqa
         )
 
         # format to return to user
@@ -227,7 +227,7 @@ def deletePlants():
         ).filter(
             plant_models.UsersPlants.user_id == user_id,
             plant_models.UsersPlants.id.in_(userPlantIDs),
-            plant_models.UsersPlants.deleted_at is None
+            plant_models.UsersPlants.deleted_at == None  # noqa
         ).update(
             {plant_models.UsersPlants.deleted_at: datetime.datetime.utcnow()},
             synchronize_session=False
@@ -266,7 +266,7 @@ def updatePlants():
             ).filter(
                 plant_models.UsersPlants.user_id == user_id,
                 plant_models.UsersPlants.id == updated_plant['id'],
-                plant_models.UsersPlants.deleted_at is None
+                plant_models.UsersPlants.deleted_at == None  # noqa
             ).first()
 
             # update plant properties
