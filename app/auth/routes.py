@@ -6,6 +6,7 @@ import jwt
 from .. import create_session
 from .. import utils
 from . import models
+from http import HTTPStatus
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -39,13 +40,13 @@ def login():
                 algorithm=current_app.config['JWT_ALG'])
 
             res = current_app.make_response(
-                ({'token': encoded_jwt}, current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
+                ({'token': encoded_jwt}, HTTPStatus.OK))
         else:
             res = current_app.make_response(
-                ('Login Failed', current_app.config['HTTP_STATUS_CODES']['UNAUTHORIZED']))
+                ('Login Failed', HTTPStatus.UNAUTHORIZED))
     except BaseException:
         res = current_app.make_response(
-            ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
     return res
 
 
@@ -60,13 +61,15 @@ def create_user():
     if len(password) < min_password_length or len(
             password) > max_password_length:
         res = current_app.make_response((f'Password length must be between {min_password_length} and {max_password_length}',
-                                         current_app.config['BAD_REQUEST']))
+                                         HTTPStatus.BAD_REQUEST))
         return res
     try:
         db_session = create_session()
 
         # check if user exists already
-        existing_user = db_session.query(models.User).filter(models.User.email==email).first()
+        existing_user = db_session.query(
+            models.User).filter(
+            models.User.email == email).first()
         if existing_user is not None:
             raise Exception(f"error, user with email {email} already exists")
 
@@ -88,11 +91,11 @@ def create_user():
         db_session.commit()
 
         res = current_app.make_response(
-            ('Success', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
+            ('Success', HTTPStatus.OK))
     except BaseException as e:
         print(e.args)
         res = current_app.make_response(
-            ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['BAD_REQUEST']))
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
 
     return res
 
@@ -121,8 +124,8 @@ def delete_user():
         db_session.commit()
 
         res = current_app.make_response(
-            ('Success', current_app.config['HTTP_STATUS_CODES']['SUCCESS']))
+            ('Success', HTTPStatus.OK))
     except BaseException:
         res = current_app.make_response(
-            ('Something Bad Happened', current_app.config['HTTP_STATUS_CODES']['BAD_REQUEST']))
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
     return res
