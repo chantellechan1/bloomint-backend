@@ -32,6 +32,8 @@ def format_plant(plant_row):
     }
     return formatted_plant
 
+# TODO: return info about a plant type - POST body should have plant_type_id
+
 
 # route returns list of user_plant_ids (ids of unique plants that the user
 # owns)
@@ -96,6 +98,65 @@ def getUserPlants():
         res = current_app.make_response(
             (jsonify(plants), HTTPStatus.OK))
 
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+    return res
+
+
+# this route returns plant type information
+
+
+@plant_blueprint.route('/plants/plant_types', methods=['POST'])
+def findPlantTypes():
+
+    try:
+        # get list of plant ids from request body
+        req_body = request.get_json()
+        plant_type_ids = req_body['plant_type_ids']
+        print('plant_type_ids:')
+        print(' '.join([str(elem) for elem in plant_type_ids]))
+
+        db_session = create_session()
+
+        # get email from jwt in auth header
+        email = utils.try_get_user_email(request)
+
+        # get user_id from email
+        user_id = get_user_id_from_email(db_session, email)
+
+        # get plants from plant_ids
+        # the <Column>.in_() functions expects a list of acceptable plant ids
+        plantTypes = db_session.query(plant_models.Plant).filter(
+            plant_models.Plant.id.in_(plant_type_ids),
+            plant_models.Plant.deleted_at == None  # noqa
+        )
+
+        # get plant_ids from user_ids
+        result = db_session.query(plant_models.UsersPlants).filter(
+            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None)  # noqa
+        plant_ids = map(lambda plant: plant.plant_id, result)
+        plant_ids = list(plant_ids)
+
+        # format to return to user
+        formattedPlants = []
+
+        for plant in plantTypes:
+            num_plants_owned = plant_ids.count(plant.id)
+
+            formattedPlants.append({
+                'id': plant.id,
+                'name': plant.name,
+                'num_owned': num_plants_owned,
+                'sunlight': plant.sunlight,
+                'min_temp': plant.min_temp,
+                'max_temp': plant.max_temp,
+                'water_frequency': plant.water_frequency,
+                'created_at': plant.created_at
+            })
+
+        res = current_app.make_response(
+            (jsonify(formattedPlants), HTTPStatus.OK))
     except BaseException:
         res = current_app.make_response(
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
