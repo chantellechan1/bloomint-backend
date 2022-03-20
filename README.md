@@ -25,14 +25,4 @@ generate_password_hash(password, salt_length=128)
 
 
 ### config
-Two config files are expected, one is public and located in `./config`. There is a private config file located in `./instance/config.py`.
-The expected contents of this file are below:  
-```
-PEPPER = ''
-JWT_SECRET = ''
-DB_PASSWORD = ''
-DB_HOST = '<your db host ip address>'
-DB_CONN_STRING = f'postgresql://postgres:{DB_PASSWORD}@{DB_HOST}:<your db port, postgres defaults to 5432>/<your db name>'
-```
-* note: the length of the `PEPPER` is reccommend by the NIST to be minimum 14 characters. However, the length of the password and the pepper combined cannot exceed 128 characters otherwise the error `ValueError: [digital envelope routines: CRYPTO_internal] bad key length` will be generated on macOS operating systems.
-* due to this limitation, the pepper length for this project is expected to be 14 characters, and the minimum and maximum password lengths are `7` characters and `100` characters respectively
+Configuration is documented and set in the file config.py
