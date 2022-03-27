@@ -105,8 +105,7 @@ def getUserPlants():
 
 
 # this route returns plant type information
-
-
+# provided that an array of plant type IDs are supplied in the body
 @plant_blueprint.route('/plants/plant_types', methods=['POST'])
 def findPlantTypes():
 
@@ -166,7 +165,7 @@ def findPlantTypes():
 # this route returns all the types of plants that a user owns, as well as
 # the number of each type of plant they own
 @plant_blueprint.route('/plants/user/plant_types', methods=['GET'])
-def allUserPlants():
+def allUserPlantTypes():
 
     # TODO: implement pagination so only 10 plant types are returned at once
     # 10 was picked as a reasonable number of plant types to look at on one
@@ -181,6 +180,56 @@ def allUserPlants():
         user_id = get_user_id_from_email(db_session, email)
 
         # get plant_ids from user_ids
+        result = db_session.query(plant_models.UsersPlants).filter(
+            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None)  # noqa
+        plant_ids = map(lambda plant: plant.plant_id, result)
+        plant_ids = list(plant_ids)
+
+        # get plants from plant_ids
+        # the <Column>.in_() functions expects a list of acceptable plant ids
+        userPlants = db_session.query(plant_models.Plant).filter(
+            plant_models.Plant.id.in_(plant_ids),
+            plant_models.Plant.deleted_at == None  # noqa
+        )
+
+        # format to return to user
+        formattedUserPlants = []
+
+        for plant in userPlants:
+            # plant.id on following line is id on Plants table (plant type id)
+            num_plants_owned = plant_ids.count(plant.id)
+
+            formattedUserPlants.append({
+                'id': plant.id,
+                'name': plant.name,
+                'num_owned': num_plants_owned,
+                'sunlight': plant.sunlight,
+                'min_temp': plant.min_temp,
+                'max_temp': plant.max_temp,
+                'water_frequency': plant.water_frequency,
+                'created_at': plant.created_at
+            })
+
+        res = current_app.make_response(
+            (jsonify(formattedUserPlants), HTTPStatus.OK))
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+    return res
+
+# return all plant types (regardless of whether a user owns a plant of this type)
+@plant_blueprint.route('/plants/plant_types/all', methods=['GET'])
+def plantTypesAll():
+    try:
+        db_session = create_session()
+
+        # get email from jwt in auth header
+        email = utils.try_get_user_email(request)
+
+        # get user_id from email
+        user_id = get_user_id_from_email(db_session, email)
+
+        # get plant_ids from user_ids (UserPlantIDs)
         result = db_session.query(plant_models.UsersPlants).filter(
             plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None)  # noqa
         plant_ids = map(lambda plant: plant.plant_id, result)
@@ -385,3 +434,6 @@ def updatePlants():
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
 
     return res
+
+
+
