@@ -168,3 +168,23 @@ def delete_user():
         res = current_app.make_response(
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
     return res
+
+
+@auth_blueprint.route('/auth/get_user', methods=['GET'])
+def get_user():
+    try:
+        email = utils.try_get_user_email(request)
+
+        db_session = create_session()
+        user = db_session.query(models.User).filter(
+            models.User.email == email).first()
+
+        res = current_app.make_response(
+            ({
+                'email': user.email,
+                'created_at': user.created_at
+            }, HTTPStatus.OK))
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+    return res
