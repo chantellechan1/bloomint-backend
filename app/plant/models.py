@@ -60,17 +60,16 @@ def init_plants_models(Base):
         image_id = Column(Integer, primary_key=True, nullable=False)
         created_at = Column(DateTime, nullable=False)
         deleted_at = Column(DateTime, nullable=True)
-    
+
         def __repr__(self):
             return f'<UserPlantImages> {self.user_plant_id} {self.image_id}'
-    
+
     class PlantTypeImages(Base):
         __tablename__ = "PlantTypeImages"
         plant_id = Column(Integer, primary_key=True, nullable=False)
         image_id = Column(Integer, primary_key=True, nullable=False)
         created_at = Column(DateTime, nullable=False)
         deleted_at = Column(DateTime, nullable=True)
-    
+
         def __repr__(self):
             return f'<PlantTypeImages> {self.user_plant_id} {self.image_id}'
-

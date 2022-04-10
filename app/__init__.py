@@ -45,19 +45,19 @@ def seed_db_for_test(db):
     # add dummy plant types
     from .plant import models as plant_models
     mint = plant_models.Plant(
-            name='mint',
-            sunlight='medium',
-            min_temp=0,
-            max_temp=22,
-            water_frequency=10,
-            created_at=datetime.datetime.utcnow())
+        name='mint',
+        sunlight='medium',
+        min_temp=0,
+        max_temp=22,
+        water_frequency=10,
+        created_at=datetime.datetime.utcnow())
     basil = plant_models.Plant(
-            name='basil',
-            sunlight='high',
-            min_temp=10,
-            max_temp=26,
-            water_frequency=8,
-            created_at=datetime.datetime.utcnow())
+        name='basil',
+        sunlight='high',
+        min_temp=10,
+        max_temp=26,
+        water_frequency=8,
+        created_at=datetime.datetime.utcnow())
     db.add(mint)
     db.add(basil)
 

@@ -218,7 +218,8 @@ def allUserPlantTypes():
     return res
 
 
-# return all plant types (regardless of whether a user owns a plant of this type)
+# return all plant types (regardless of whether a user owns a plant of
+# this type)
 @plant_blueprint.route('/plants/plant_types/all', methods=['GET'])
 def plantTypesAll():
     try:
@@ -345,7 +346,8 @@ def createPlants():
 
         db_session.commit()
 
-        new_plant_ids = list(map(lambda userPlant: userPlant.id, list(new_plant_list)))
+        new_plant_ids = list(
+            map(lambda userPlant: userPlant.id, list(new_plant_list)))
 
         res = current_app.make_response(
             ({'status': 'success', 'data': new_plant_ids}, HTTPStatus.OK))
@@ -458,12 +460,13 @@ def createImage():
 
         new_items_list = []
 
-        # create new Image and UserPlantImage objects and append to new_items_list
+        # create new Image and UserPlantImage objects and append to
+        # new_items_list
         for image in images:
             image_binary = base64.b64decode(image['image_base_64'])
             new_image = plant_models.Images(
-                image = image_binary,
-                created_at = datetime.datetime.utcnow()
+                image=image_binary,
+                created_at=datetime.datetime.utcnow()
             )
             new_user_plant_image = plant_models.UserPlantImages(
 
