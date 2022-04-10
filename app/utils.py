@@ -52,5 +52,8 @@ def create_jwt(email: str, timediff: datetime.timedelta) -> str:
 
 
 def get_base_address() -> str:
-    # TODO: this is wrong
-    return 'localhost:5000'
+    flask_env = get_flask_env()
+    if flask_env == FlaskEnv.PRODUCTION:
+        return current_app.config['BASE_ADDRESS']
+    else:
+        return 'localhost:5000'
