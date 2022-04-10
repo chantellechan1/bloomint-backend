@@ -4,9 +4,19 @@
     <label for='pwd'>Provide password for new account:</label><br>
     <input type='password' id='pwd' name='pwd'>
     <button onclick="sendPostToServerToRegisterUser()">Register</button> 
+    <div id='server_response'>
+    </div>
 </div>
 
 <script>
+
+async function onRegisterPasswordResponse(response) {
+    const reader = response.body.getReader();
+    var readStream = await reader.read()
+    var responseText = new TextDecoder().decode(readStream.value)
+    document.getElementById('server_response').innerHTML = responseText
+}
+
 function sendPostToServerToRegisterUser() {
 	const endpoint = '/auth/verify_user';
 	
@@ -24,7 +34,6 @@ function sendPostToServerToRegisterUser() {
 	}
 	
 	fetch(endpoint, options)
-	     .then(res => res.json())
-	     .then(res => console.log(res));
+	     .then(res => onRegisterPasswordResponse(res));
 }
 </script>

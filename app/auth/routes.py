@@ -105,7 +105,7 @@ def verify_user():
         if len(password) < min_password_length or len(
                 password) > max_password_length:
             res = current_app.make_response((f'Password length must be between {min_password_length} and {max_password_length}',
-                                             current_app.config['BAD_REQUEST']))
+                                             HTTPStatus.BAD_REQUEST))
             return res
 
         db_session = create_session()
@@ -139,7 +139,7 @@ def verify_user():
         db_session.commit()
 
         res = current_app.make_response(
-            ('Success', HTTPStatus.OK))
+            ('Successfully registered user with password', HTTPStatus.OK))
         return res
     except BaseException as e:
         print(e.args)
