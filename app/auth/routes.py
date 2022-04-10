@@ -60,7 +60,9 @@ def create_user():
             models.User).filter(
             models.User.email == email).first()
         if existing_user is not None:
-            raise Exception(f"error, user with email {email} already exists")
+            res = current_app.make_response((f'user with email {email} already exists',
+                                             HTTPStatus.BAD_REQUEST))
+            return res
 
         # send them the email with the jwt
         jwt = utils.create_jwt(
@@ -119,7 +121,9 @@ def verify_user():
             models.User).filter(
             models.User.email == email).first()
         if existing_user is not None:
-            raise Exception(f"error, user with email {email} already exists")
+            res = current_app.make_response((f'user with email {email} already exists',
+                                             HTTPStatus.BAD_REQUEST))
+            return res
 
         # create hashed password
         hashed_password = generate_password_hash(
