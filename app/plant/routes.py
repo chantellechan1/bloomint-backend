@@ -1,6 +1,7 @@
 from flask import Blueprint, request, current_app, jsonify
 import datetime
 from http import HTTPStatus
+import base64
 
 from .. import utils
 from .. import create_session
@@ -309,6 +310,7 @@ def getPlantsByType():
 @plant_blueprint.route('/plants/user/create', methods=['POST'])
 def createPlants():
     try:
+
         req_body = request.get_json()
 
         db_session = create_session()
@@ -344,8 +346,10 @@ def createPlants():
 
         db_session.commit()
 
+        new_plant_ids = list(map(lambda userPlant: userPlant.id, list(new_plant_list)))
+
         res = current_app.make_response(
-            ('success', HTTPStatus.OK))
+            ({'status': 'success', 'data': new_plant_ids}, HTTPStatus.OK))
     except BaseException:
         res = current_app.make_response(
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
@@ -385,7 +389,7 @@ def deletePlants():
         db_session.commit()
 
         res = current_app.make_response(
-            ('success', HTTPStatus.BAD_REQUEST))
+            ('success', HTTPStatus.OK))
     except BaseException:
         res = current_app.make_response(
             ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
@@ -393,8 +397,7 @@ def deletePlants():
     return res
 
 
-# route to delete plants
-# post body expects arrays of userplant_ids
+# route to update plants
 @plant_blueprint.route('/plants/user/update', methods=['POST'])
 def updatePlants():
     try:
@@ -436,4 +439,44 @@ def updatePlants():
     return res
 
 
+# route to create images
+@plant_blueprint.route('/plants/images/create', methods=['POST'])
+def createImage():
 
+    try:
+        images = request.get_json()
+        db_session = create_session()
+
+        # get email from jwt in auth header
+        email = utils.try_get_user_email(request)
+
+        # get user_id from email
+        user_id = get_user_id_from_email(db_session, email)
+
+        new_items_list = []
+
+        # create new Image and UserPlantImage objects and append to new_items_list
+        for image in images:
+            image_binary = base64.b64decode(image['image_base_64'])
+            new_image = plant_models.Images(
+                image = image_binary,
+                created_at = datetime.datetime.utcnow()
+            )
+            new_user_plant_image = plant_models.UserPlantImages(
+
+            )
+
+            new_items_list.append(new_image)
+
+        db_session.add_all(new_items_list)
+
+        db_session.commit()
+
+        res = current_app.make_response(
+            ('success', HTTPStatus.OK))
+
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+
+    return res

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, null, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Boolean, null, Text, BINARY
+from sqlalchemy.dialects.postgresql import BYTEA
 
 from ..auth import models  # for User model
 
@@ -6,6 +7,9 @@ from ..auth import models  # for User model
 def init_plants_models(Base):
     global Plant
     global UsersPlants
+    global Images
+    global UserPlantImages
+    global PlantTypeImages
 
     class Plant(Base):
         __tablename__ = "Plants"
@@ -39,3 +43,34 @@ def init_plants_models(Base):
 
         def __repr__(self):
             return f'<UsersPlants> {self.id}: {self.plant_name}'
+
+    class Images(Base):
+        __tablename__ = "Images"
+        id = Column(Integer, primary_key=True)
+        image = Column(BYTEA, nullable=False)
+        created_at = Column(DateTime, nullable=False)
+        deleted_at = Column(DateTime, nullable=True)
+
+        def __repr__(self):
+            return f'<Image> {self.id}'
+
+    class UserPlantImages(Base):
+        __tablename__ = "UserImages"
+        user_plant_id = Column(Integer, primary_key=True, nullable=False)
+        image_id = Column(Integer, primary_key=True, nullable=False)
+        created_at = Column(DateTime, nullable=False)
+        deleted_at = Column(DateTime, nullable=True)
+    
+        def __repr__(self):
+            return f'<UserPlantImages> {self.user_plant_id} {self.image_id}'
+    
+    class PlantTypeImages(Base):
+        __tablename__ = "PlantTypeImages"
+        plant_id = Column(Integer, primary_key=True, nullable=False)
+        image_id = Column(Integer, primary_key=True, nullable=False)
+        created_at = Column(DateTime, nullable=False)
+        deleted_at = Column(DateTime, nullable=True)
+    
+        def __repr__(self):
+            return f'<PlantTypeImages> {self.user_plant_id} {self.image_id}'
+
