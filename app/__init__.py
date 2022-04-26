@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 
 # db imports
 from sqlalchemy import create_engine
@@ -72,6 +73,9 @@ def create_session():
 def init_app(flask_env: str, seed_and_exit: bool) -> Flask:
     """initializes the app ¯\\_(ツ)_/¯"""
     app = Flask(__name__, instance_relative_config=True)
+    
+    #CORS
+    CORS(app, supports_credentials=True)
 
     flask_env = utils.get_flask_env()
     if flask_env == utils.FlaskEnv.PRODUCTION:
