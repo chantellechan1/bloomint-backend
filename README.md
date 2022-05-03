@@ -57,9 +57,9 @@ You can change between production/test/development modes as follows:
 for this, we need an SSL certificate file, it is reccommended to follow these instructions to use [certbot](https://certbot.eff.org/instructions?ws=webproduct&os=ubuntufocal) from [letsencrypt](https://letsencrypt.org/)
 
 ### production deployment
-1. fill out the production config section in `./scripts/set_production.sh`
+1. fill out the production config section in `config.py`
 2. set `FLASK_ENV` to production: ```source ./scripts/set_production.sh```
-3. run `gunicorn wsgi:app --bind=0.0.0.0:443 --certfile /etc/letsencrypt/live/app.bloomint.net/fullchain.pem --keyfile /etc/letsencrypt/live/app.bloomint.net/privkey.pem`
+3. run `gunicorn wsgi:app --bind=0.0.0.0:443 --certfile /etc/letsencrypt/live/app.bloomint.net/fullchain.pem --keyfile /etc/letsencrypt/live/app.bloomint.net/privkey.pem -w 4`
     * `-w` is the number of worker processes
     * certfile and keyfile are files that will be provisioned by following the certbot steps above
     * syntax of gunicorn command is `gunicorn <filename>:<name of flask app, most commonly app>`
