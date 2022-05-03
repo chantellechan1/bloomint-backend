@@ -69,20 +69,17 @@ def create_user():
             email=email,
             timediff=current_app.config['JWT_EMAIL_VERIFICATION_EXPIRY'])
 
-        if utils.get_flask_env() == utils.FlaskEnv.TEST:
+        if utils.get_flask_env() == utils.FlaskEnv.PRODUCTION:
+            emailer.send_email("Bloomint verification email",
+                               f"Click this link to verify your \
+                               email address: {utils.get_base_address()}/static/authorize?jwt={jwt}",
+                               email)
+        else:
             # When we run the test, it's too painful to set up the email stuff.
             # Just return the jwt in the response so they confirm their email
             # address and set their password
             res = current_app.make_response(
                 ({'jwt': jwt}, HTTPStatus.OK))
-        else:
-            emailer.send_email("Bloomint verification email",
-                               f"Click this link to verify your \
-                               email address: {utils.get_base_address()}/static/authorize?jwt={jwt}",
-                               email)
-
-            res = current_app.make_response(
-                ('Success', HTTPStatus.OK))
     except BaseException as e:
         print(e.args)
         res = current_app.make_response(

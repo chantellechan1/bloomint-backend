@@ -14,6 +14,7 @@ SIGNUP_RESPONSE=$(curl \
     --data '{"email":"'$EMAIL'"}' \
     --silent \
     $URL/auth/create_user)
+echo $SIGNUP_RESPONSE
 SIGNUP_JWT=$(echo $SIGNUP_RESPONSE | jq .jwt)
 
 VERIFY_USER_RESPONSE=$(curl \

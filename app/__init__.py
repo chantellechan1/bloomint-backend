@@ -73,8 +73,8 @@ def create_session():
 def init_app(flask_env: str, seed_and_exit: bool) -> Flask:
     """initializes the app ¯\\_(ツ)_/¯"""
     app = Flask(__name__, instance_relative_config=True)
-    
-    #CORS
+
+    # CORS
     CORS(app, supports_credentials=True)
 
     flask_env = utils.get_flask_env()

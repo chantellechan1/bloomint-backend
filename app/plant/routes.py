@@ -447,39 +447,162 @@ def updatePlants():
 # route to create images
 @plant_blueprint.route('/plants/images/create', methods=['POST'])
 def createImage():
-
     try:
         images = request.get_json()
-        db_session = create_session()
 
         # get email from jwt in auth header
         email = utils.try_get_user_email(request)
 
+        db_session = create_session()
         # get user_id from email
         user_id = get_user_id_from_email(db_session, email)
 
-        new_items_list = []
+        # check that user plant user id matches the user id
+        for image in images:
+            user_plant_id = image['user_plant_id']
+            user_plant = db_session.query(plant_models.UsersPlants).filter(
+                    plant_models.UsersPlants.id == user_plant_id,
+                    plant_models.UsersPlants.deleted_at == None).first()  # noqa
 
+            if user_plant is None:
+                res = current_app.make_response(
+                    (f'could not find user plant with id {user_plant_id}', HTTPStatus.BAD_REQUEST))
+                return res
+            if user_plant.user_id != user_id:
+                res = current_app.make_response(
+                    ('plant does not belong to you', HTTPStatus.BAD_REQUEST))
+                return res
+
+        new_images_list = []
         # create new Image and UserPlantImage objects and append to
         # new_items_list
-        for image in images:
+        # use index to guarantee same ordering in both loops
+        for i in range(len(images)):
+            image = images[i]
             image_binary = base64.b64decode(image['image_base_64'])
             new_image = plant_models.Images(
                 image=image_binary,
                 created_at=datetime.datetime.utcnow()
             )
+
+            new_images_list.append(new_image)
+
+        # Hopefully this will generate the IDs
+        # which we use to link user plant image to
+        # the image
+        db_session.add_all(new_images_list)
+        db_session.commit()
+
+        # use index to guarantee same ordering in both loops
+        new_user_plant_images = []
+        for i in range(len(new_images_list)):
+            new_image = new_images_list[i]
+            image = images[i]
             new_user_plant_image = plant_models.UserPlantImages(
-
+                image_id=new_image.id,
+                user_plant_id=image['user_plant_id'],
+                created_at=datetime.datetime.utcnow()
             )
+            new_user_plant_images.append(new_user_plant_image)
 
-            new_items_list.append(new_image)
-
-        db_session.add_all(new_items_list)
-
+        db_session.add_all(new_user_plant_images)
         db_session.commit()
 
         res = current_app.make_response(
             ('success', HTTPStatus.OK))
+
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+
+    return res
+
+
+@plant_blueprint.route('/plants/images/getByUserPlantIds', methods=['GET'])
+def getImagesGivenUserPlantIds():
+    try:
+        user_plant_ids = request.get_json()
+
+        # get email from jwt in auth header
+        email = utils.try_get_user_email(request)
+        db_session = create_session()
+
+        user_id = get_user_id_from_email(db_session, email)
+
+        images_list = []
+        for user_plant_id in user_plant_ids:
+            user_plant = db_session.query(plant_models.UsersPlants).filter(
+                plant_models.UsersPlants.id == user_plant_id,
+                plant_models.UsersPlants.deleted_at == None).first()  # noqa
+
+            if user_plant.user_id != user_id:
+                res = current_app.make_response(
+                    ('plant does not belong to you', HTTPStatus.BAD_REQUEST))
+                return res
+
+            user_plant_images = db_session.query(plant_models.UserPlantImages).filter(
+                    plant_models.UserPlantImages.user_plant_id == user_plant_id,
+                    plant_models.UserPlantImages.deleted_at == None)  # noqa
+            for user_plant_image in user_plant_images:
+                image = db_session.query(plant_models.Images).filter(
+                        plant_models.Images.id == user_plant_image.image_id,
+                        plant_models.Images.deleted_at == None).first()  # noqa
+                encoded_image = base64.b64encode(image.image)
+                encoded_image_str = str(encoded_image, "utf-8")
+                json_image = {
+                    "image_id": image.id,
+                    "image_data": encoded_image_str}
+                images_list.append(json_image)
+
+        res = current_app.make_response(
+            (jsonify(images_list), HTTPStatus.OK))
+
+    except BaseException:
+        res = current_app.make_response(
+            ('Something Bad Happened', HTTPStatus.BAD_REQUEST))
+
+    return res
+
+
+@plant_blueprint.route('/plants/images/delete', methods=['POST'])
+def deleteImagesGivenUserPlantImageIds():
+    try:
+        image_ids = request.get_json()
+
+        # get email from jwt in auth header
+        email = utils.try_get_user_email(request)
+        db_session = create_session()
+
+        user_id = get_user_id_from_email(db_session, email)
+
+        for image_id in image_ids:
+            user_plant_image = db_session.query(plant_models.UserPlantImages).filter(
+                plant_models.UserPlantImages.image_id == image_id,
+                plant_models.UserPlantImages.deleted_at == None).first()  # noqa
+
+            user_plant = db_session.query(plant_models.UsersPlants).filter(
+                    plant_models.UsersPlants.id == user_plant_image.user_plant_id,
+                    plant_models.UserPlantImages.deleted_at == None).first()  # noqa
+
+            if user_plant.user_id != user_id:
+                res = current_app.make_response(
+                    ('plant does not belong to you', HTTPStatus.BAD_REQUEST))
+                return res
+
+            db_session.query(plant_models.Images).filter(
+                        plant_models.Images.id == image_id,
+                        plant_models.Images.deleted_at == None).update(  # noqa
+                        {plant_models.Images.deleted_at: datetime.datetime.utcnow()},
+                        synchronize_session=False)
+
+            db_session.query(plant_models.UserPlantImages).filter(
+                    plant_models.UserPlantImages.image_id == image_id,
+                    plant_models.UserPlantImages.deleted_at == None).update(  # noqa
+                        {plant_models.Images.deleted_at: datetime.datetime.utcnow()},
+                        synchronize_session=False)
+
+        res = current_app.make_response(
+            ('Success', HTTPStatus.OK))
 
     except BaseException:
         res = current_app.make_response(
