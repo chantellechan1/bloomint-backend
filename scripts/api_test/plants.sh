@@ -92,8 +92,8 @@ CREATE_IMAGE_RESPONSE=$(curl \
     $URL/plants/images/create)
 
 echo "Get user plant images"
-GET_IMAGE_RESPONSE=$(curl \
-    --request GET \
+POST_IMAGE_RESPONSE=$(curl \
+    --request POST \
     --header "Content-Type: application/json" \
     --header "Authorization: Bearer $JWT" \
     --header "accept: application/json" \

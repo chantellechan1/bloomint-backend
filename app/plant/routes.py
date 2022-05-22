@@ -518,7 +518,7 @@ def createImage():
     return res
 
 
-@plant_blueprint.route('/plants/images/getByUserPlantIds', methods=['GET'])
+@plant_blueprint.route('/plants/images/getByUserPlantIds', methods=['POST'])
 def getImagesGivenUserPlantIds():
     try:
         user_plant_ids = request.get_json()
