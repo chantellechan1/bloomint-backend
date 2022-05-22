@@ -101,7 +101,7 @@ POST_IMAGE_RESPONSE=$(curl \
     --silent \
     $URL/plants/images/getByUserPlantIds)
 
-RETURNED_IMAGE_BASE_64=$(echo $GET_IMAGE_RESPONSE | jq .[0].image_data)
+RETURNED_IMAGE_BASE_64=$(echo $POST_IMAGE_RESPONSE | jq .[0].image_data)
 # strip trailing quotation marks
 RETURNED_IMAGE_BASE_64=$(echo $RETURNED_IMAGE_BASE_64 | sed -e 's/^"//' -e 's/"$//')
 
