@@ -11,7 +11,9 @@ You should create and activate a virtual environment before doing anything:
 `pip install -r requirements.txt`
 
 ### running on the server
-`python3 wsgi.py`  
+`sudo su`  
+`source ./scripts/set_production.sh`  
+`gunicorn wsgi:app --bind=0.0.0.0:443 --certfile <path to fullchain.pem from letsencrypt> --keyfile <path to privkey.pem from letsencrypt>`  
 
 ### seed dummy database and exit
 `python3 wsgi.py --seed-and-exit`  

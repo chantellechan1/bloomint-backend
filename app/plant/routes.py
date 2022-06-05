@@ -551,6 +551,7 @@ def getImagesGivenUserPlantIds():
                 encoded_image_str = str(encoded_image, "utf-8")
                 json_image = {
                     "image_id": image.id,
+                    "user_plant_id": user_plant_id,
                     "image_data": encoded_image_str}
                 images_list.append(json_image)
 
