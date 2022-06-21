@@ -38,10 +38,11 @@ GET_ALL_PLANTTYPES_RESPONSE=$(curl \
     --header "accept: application/json" \
     --silent \
     $URL/plants/plant_types/all)
+echo "Get all plant typesresponse: $GET_ALL_PLANTTYPES_RESPONSE"
 
 PLANT_TYPE_ID=$(echo $GET_ALL_PLANTTYPES_RESPONSE | jq .[0].id)
 
-echo "Get all plant type"
+echo "Get a single plant type"
 # Find some info about this plant type.
 GET_PLANTTYPE_RESPONSE=$(curl \
     --request POST \

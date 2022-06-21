@@ -1,5 +1,6 @@
 from flask import current_app
 from enum import Enum
+from .auth import models as auth_models
 import jwt
 import datetime
 import time
@@ -38,6 +39,15 @@ def try_get_user_email(request) -> str:
                              algorithms=[current_app.config['JWT_ALG']])
     email = jwt_payload['email']
     return email
+
+
+def get_user_id_from_email(db_session, email) -> int:
+    user = db_session.query(
+        auth_models.User).filter(
+        auth_models.User.email == email,
+        auth_models.User.deleted_at == None).first()  # noqa
+    user_id = user.id
+    return user_id
 
 
 def create_jwt(email: str, timediff: datetime.timedelta) -> str:

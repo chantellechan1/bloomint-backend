@@ -6,26 +6,16 @@ import base64
 from .. import utils
 from .. import create_session
 from . import models as plant_models
-from ..auth import models as auth_models
 
 plant_blueprint = Blueprint('plant', __name__)
 
 
 # local utils
-def get_user_id_from_email(db_session, email) -> int:
-    user = db_session.query(
-        auth_models.User).filter(
-        auth_models.User.email == email,
-        auth_models.User.deleted_at == None).first()  # noqa
-    user_id = user.id
-    return user_id
-
-
 def format_plant(plant_row):
     formatted_plant = {
         'id': plant_row.id,
         'user_id': plant_row.user_id,
-        'plant_id': plant_row.plant_id,
+        'plant_id': plant_row.planttype_id,
         'plant_name': plant_row.plant_name,
         'notes': plant_row.notes,
         'purchased_at': plant_row.purchased_at,
@@ -41,20 +31,19 @@ def format_plant(plant_row):
 @plant_blueprint.route('/plants/user/get_plant_ids', methods=['GET'])
 def getUserPlantIds():
     try:
-
         db_session = create_session()
 
         # get email from jwt in auth header
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         # get plant_ids from user_ids
         result = db_session.query(
-            plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id,
-            plant_models.UsersPlants.deleted_at == None)  # noqa
+            plant_models.UserPlant).filter(
+            plant_models.UserPlant.user_id == user_id,
+            plant_models.UserPlant.deleted_at == None)  # noqa
         plant_ids = map(lambda row: row.id, result)
         plant_ids = list(plant_ids)
 
@@ -84,13 +73,13 @@ def getUserPlants():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         # get plants from user_id and plant_ids
-        result = db_session.query(plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id,
-            plant_models.UsersPlants.id.in_(plant_ids),
-            plant_models.UsersPlants.deleted_at == None  # noqa
+        result = db_session.query(plant_models.UserPlant).filter(
+            plant_models.UserPlant.user_id == user_id,
+            plant_models.UserPlant.id.in_(plant_ids),
+            plant_models.UserPlant.deleted_at == None  # noqa
         )
 
         plants = map(format_plant, result)
@@ -109,7 +98,6 @@ def getUserPlants():
 # provided that an array of plant type IDs are supplied in the body
 @plant_blueprint.route('/plants/plant_types', methods=['POST'])
 def findPlantTypes():
-
     try:
         # get list of plant ids from request body
         req_body = request.get_json()
@@ -123,19 +111,19 @@ def findPlantTypes():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         # get plants from plant_ids
         # the <Column>.in_() functions expects a list of acceptable plant ids
-        plantTypes = db_session.query(plant_models.Plant).filter(
-            plant_models.Plant.id.in_(plant_type_ids),
-            plant_models.Plant.deleted_at == None  # noqa
+        plantTypes = db_session.query(plant_models.PlantType).filter(
+            plant_models.PlantType.id.in_(plant_type_ids),
+            plant_models.PlantType.deleted_at == None  # noqa
         )
 
         # get plant_ids from user_ids
-        result = db_session.query(plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None)  # noqa
-        plant_ids = map(lambda plant: plant.plant_id, result)
+        result = db_session.query(plant_models.UserPlant).filter(
+            plant_models.UserPlant.user_id == user_id, plant_models.UserPlant.deleted_at == None)  # noqa
+        plant_ids = map(lambda plant: plant.planttype_id, result)
         plant_ids = list(plant_ids)
 
         # format to return to user
@@ -166,7 +154,7 @@ def findPlantTypes():
 # this route returns all the types of plants that a user owns, as well as
 # the number of each type of plant they own
 @plant_blueprint.route('/plants/user/plant_types', methods=['GET'])
-def allUserPlantTypes():
+def allPlantTypesOwnedByUser():
     # TODO: implement pagination so only 10 plant types are returned at once
     # 10 was picked as a reasonable number of plant types to look at on one
     # page
@@ -177,19 +165,19 @@ def allUserPlantTypes():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         # get plant_ids from user_ids
-        result = db_session.query(plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None)  # noqa
-        plant_ids = map(lambda plant: plant.plant_id, result)
+        result = db_session.query(plant_models.UserPlant).filter(
+            plant_models.UserPlant.user_id == user_id, plant_models.UserPlant.deleted_at == None)  # noqa
+        plant_ids = map(lambda plant: plant.planttype_id, result)
         plant_ids = list(plant_ids)
 
         # get plants from plant_ids
         # the <Column>.in_() functions expects a list of acceptable plant ids
-        userPlants = db_session.query(plant_models.Plant).filter(
-            plant_models.Plant.id.in_(plant_ids),
-            plant_models.Plant.deleted_at == None  # noqa
+        userPlants = db_session.query(plant_models.PlantType).filter(
+            plant_models.PlantType.id.in_(plant_ids),
+            plant_models.PlantType.deleted_at == None  # noqa
         )
 
         # format to return to user
@@ -229,18 +217,18 @@ def plantTypesAll():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         # get plant_ids from user_ids (UserPlantIDs)
-        result = db_session.query(plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id, plant_models.UsersPlants.deleted_at == None)  # noqa
-        plant_ids = map(lambda plant: plant.plant_id, result)
+        result = db_session.query(plant_models.UserPlant).filter(
+            plant_models.UserPlant.user_id == user_id, plant_models.UserPlant.deleted_at == None)  # noqa
+        plant_ids = map(lambda plant: plant.planttype_id, result)
         plant_ids = list(plant_ids)
 
         # get plants from plant_ids
         # the <Column>.in_() functions expects a list of acceptable plant ids
-        userPlants = db_session.query(plant_models.Plant).filter(
-            plant_models.Plant.deleted_at == None  # noqa
+        userPlants = db_session.query(plant_models.PlantType).filter(
+            plant_models.PlantType.deleted_at == None  # noqa
         )
 
         # format to return to user
@@ -285,13 +273,13 @@ def getPlantsByType():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         # get plants from user_id and plant_ids
-        result = db_session.query(plant_models.UsersPlants).filter(
-            plant_models.UsersPlants.user_id == user_id,
-            plant_models.UsersPlants.plant_id == plant_type_id,
-            plant_models.UsersPlants.deleted_at == None  # noqa
+        result = db_session.query(plant_models.UserPlant).filter(
+            plant_models.UserPlant.user_id == user_id,
+            plant_models.UserPlant.planttype_id == plant_type_id,
+            plant_models.UserPlant.deleted_at == None  # noqa
         )
 
         plants = map(format_plant, result)
@@ -308,9 +296,8 @@ def getPlantsByType():
 
 # route to create individual plants
 @plant_blueprint.route('/plants/user/create', methods=['POST'])
-def createPlants():
+def createUserPlants():
     try:
-
         req_body = request.get_json()
 
         db_session = create_session()
@@ -319,12 +306,12 @@ def createPlants():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         def make_plant(plant_row):
-            new_plant = plant_models.UsersPlants(
+            new_plant = plant_models.UserPlant(
                 user_id=user_id,
-                plant_id=plant_row['plant_id'],
+                planttype_id=plant_row['plant_id'],
                 created_at=datetime.datetime.utcnow()
             )
 
@@ -372,17 +359,17 @@ def deletePlants():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
-        # update deleted_at column in UsersPlants table
+        # update deleted_at column in UserPlants table
         db_session.query(
-            plant_models.UsersPlants
+            plant_models.UserPlant
         ).filter(
-            plant_models.UsersPlants.user_id == user_id,
-            plant_models.UsersPlants.id.in_(userPlantIDs),
-            plant_models.UsersPlants.deleted_at == None  # noqa
+            plant_models.UserPlant.user_id == user_id,
+            plant_models.UserPlant.id.in_(userPlantIDs),
+            plant_models.UserPlant.deleted_at == None  # noqa
         ).update(
-            {plant_models.UsersPlants.deleted_at: datetime.datetime.utcnow()},
+            {plant_models.UserPlant.deleted_at: datetime.datetime.utcnow()},
             synchronize_session=False
         )
 
@@ -409,16 +396,16 @@ def updatePlants():
         email = utils.try_get_user_email(request)
 
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         for updated_plant in plants_to_update:
             # get plant to update from db
             db_plant = db_session.query(
-                plant_models.UsersPlants
+                plant_models.UserPlant
             ).filter(
-                plant_models.UsersPlants.user_id == user_id,
-                plant_models.UsersPlants.id == updated_plant['id'],
-                plant_models.UsersPlants.deleted_at == None  # noqa
+                plant_models.UserPlant.user_id == user_id,
+                plant_models.UserPlant.id == updated_plant['id'],
+                plant_models.UserPlant.deleted_at == None  # noqa
             ).first()
 
             # update plant properties
@@ -446,7 +433,7 @@ def updatePlants():
 
 # route to create images
 @plant_blueprint.route('/plants/images/create', methods=['POST'])
-def createImage():
+def createUserPlantImage():
     try:
         images = request.get_json()
 
@@ -455,14 +442,14 @@ def createImage():
 
         db_session = create_session()
         # get user_id from email
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         # check that user plant user id matches the user id
         for image in images:
             user_plant_id = image['user_plant_id']
-            user_plant = db_session.query(plant_models.UsersPlants).filter(
-                    plant_models.UsersPlants.id == user_plant_id,
-                    plant_models.UsersPlants.deleted_at == None).first()  # noqa
+            user_plant = db_session.query(plant_models.UserPlant).filter(
+                    plant_models.UserPlant.id == user_plant_id,
+                    plant_models.UserPlant.deleted_at == None).first()  # noqa
 
             if user_plant is None:
                 res = current_app.make_response(
@@ -480,7 +467,7 @@ def createImage():
         for i in range(len(images)):
             image = images[i]
             image_binary = base64.b64decode(image['image_base_64'])
-            new_image = plant_models.Images(
+            new_image = plant_models.Image(
                 image=image_binary,
                 created_at=datetime.datetime.utcnow()
             )
@@ -498,7 +485,7 @@ def createImage():
         for i in range(len(new_images_list)):
             new_image = new_images_list[i]
             image = images[i]
-            new_user_plant_image = plant_models.UserPlantImages(
+            new_user_plant_image = plant_models.UserPlantImage(
                 image_id=new_image.id,
                 user_plant_id=image['user_plant_id'],
                 created_at=datetime.datetime.utcnow()
@@ -527,26 +514,26 @@ def getImagesGivenUserPlantIds():
         email = utils.try_get_user_email(request)
         db_session = create_session()
 
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         images_list = []
         for user_plant_id in user_plant_ids:
-            user_plant = db_session.query(plant_models.UsersPlants).filter(
-                plant_models.UsersPlants.id == user_plant_id,
-                plant_models.UsersPlants.deleted_at == None).first()  # noqa
+            user_plant = db_session.query(plant_models.UserPlant).filter(
+                plant_models.UserPlant.id == user_plant_id,
+                plant_models.UserPlant.deleted_at == None).first()  # noqa
 
             if user_plant.user_id != user_id:
                 res = current_app.make_response(
                     ('plant does not belong to you', HTTPStatus.BAD_REQUEST))
                 return res
 
-            user_plant_images = db_session.query(plant_models.UserPlantImages).filter(
-                    plant_models.UserPlantImages.user_plant_id == user_plant_id,
-                    plant_models.UserPlantImages.deleted_at == None)  # noqa
+            user_plant_images = db_session.query(plant_models.UserPlantImage).filter(
+                    plant_models.UserPlantImage.user_plant_id == user_plant_id,
+                    plant_models.UserPlantImage.deleted_at == None)  # noqa
             for user_plant_image in user_plant_images:
-                image = db_session.query(plant_models.Images).filter(
-                        plant_models.Images.id == user_plant_image.image_id,
-                        plant_models.Images.deleted_at == None).first()  # noqa
+                image = db_session.query(plant_models.Image).filter(
+                        plant_models.Image.id == user_plant_image.image_id,
+                        plant_models.Image.deleted_at == None).first()  # noqa
                 encoded_image = base64.b64encode(image.image)
                 encoded_image_str = str(encoded_image, "utf-8")
                 json_image = {
@@ -574,15 +561,15 @@ def deleteImagesGivenUserPlantImageIds():
         email = utils.try_get_user_email(request)
         db_session = create_session()
 
-        user_id = get_user_id_from_email(db_session, email)
+        user_id = utils.get_user_id_from_email(db_session, email)
 
         for image_id in image_ids:
             user_plant_image = db_session.query(plant_models.UserPlantImages).filter(
                 plant_models.UserPlantImages.image_id == image_id,
                 plant_models.UserPlantImages.deleted_at == None).first()  # noqa
 
-            user_plant = db_session.query(plant_models.UsersPlants).filter(
-                    plant_models.UsersPlants.id == user_plant_image.user_plant_id,
+            user_plant = db_session.query(plant_models.UserPlant).filter(
+                    plant_models.UserPlant.id == user_plant_image.user_plant_id,
                     plant_models.UserPlantImages.deleted_at == None).first()  # noqa
 
             if user_plant.user_id != user_id:

@@ -49,6 +49,8 @@ def create_user():
 
     We don't ask for the password yet, they need to get past
     email verification first
+
+    No state is changed here
     """
     req_body = request.get_json()
     email = req_body['email']
@@ -114,6 +116,7 @@ def verify_user():
         # but possible that someone took the email between
         # the time we sent the verification email, and the time
         # they actually click it and end up here.
+        # yes there is also a race condition here for a similar reason
         existing_user = db_session.query(
             models.User).filter(
             models.User.email == email).first()

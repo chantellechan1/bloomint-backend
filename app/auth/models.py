@@ -5,7 +5,7 @@ def init_auth_models(Base):
     global User
 
     class User(Base):
-        __tablename__ = 'Users'
+        __tablename__ = 'User'
 
         id = Column(Integer, primary_key=True)
         email = Column(String(50), unique=True, nullable=False)
