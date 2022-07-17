@@ -9,6 +9,7 @@ from . import utils
 
 import datetime
 import sys
+import logging
 
 
 def init_db(db_conn_string: str, db_echo: bool) -> None:
@@ -89,6 +90,12 @@ def init_app(flask_env: str, seed_and_exit: bool) -> Flask:
         print("Running in DEVELOPMENT mode")
     else:
         raise Exception(f"unkown flask environment: {flask_env}")
+
+    # initialize logging
+    logging.basicConfig(
+            format=app.config['LOG_FORMAT'],
+            filename=app.config['LOG_FILENAME'],
+            level=app.config['LOG_LEVEL'])
 
     # initialize the postgres db
     init_db(db_conn_string=app.config['DB_CONN_STRING'],

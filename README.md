@@ -9,11 +9,13 @@ You should create and activate a virtual environment before doing anything:
 ### install dependencies
 * on macos, run `brew install postgres` before pip install
 `pip install -r requirements.txt`
+* on linux just run `pip install -r requirements.txt`
 
-### running on the server
-`sudo su`  
-`source ./scripts/set_production.sh`  
-`gunicorn wsgi:app --bind=0.0.0.0:443 --certfile <path to fullchain.pem from letsencrypt> --keyfile <path to privkey.pem from letsencrypt>`  
+### running in development mode
+```
+source ./scripts/set_development.sh
+python3 wsgi.py
+```
 
 ### seed dummy database and exit
 `python3 wsgi.py --seed-and-exit`  

@@ -1,6 +1,10 @@
 from flask import current_app
+from flask.wrappers import Response, Request
 from enum import Enum
 from .auth import models as auth_models
+from http import HTTPStatus
+from typing import Callable
+import logging
 import jwt
 import datetime
 import time
@@ -69,3 +73,21 @@ def get_base_address() -> str:
         return current_app.config['BASE_ADDRESS']
     else:
         return 'localhost:5000'
+
+
+def handle_api_request(api_function: Callable, request: Request) -> Response:
+    """
+    All the API calls should go through this function.
+    It just does some generic logging and error handling
+
+    """
+    logger = logging.getLogger(__name__)
+    try:
+        logger.info("Received request {request}")
+        return api_function(request)
+    except Exception as e:
+        # https://stackoverflow.com/questions/1483429/how-do-i-print-an-exception-in-python
+        logger.warning(
+            f"Error processing request {request}: {print(repr(e))}")
+        return current_app.make_response(
+            ('Something bad happened', HTTPStatus.BAD_REQUEST))

@@ -1,4 +1,6 @@
 import datetime
+import logging
+import os
 
 
 class Config(object):
@@ -6,7 +8,7 @@ class Config(object):
     Properties in here do not change between production and config
     """
     # days to JWT expiry after user logs in
-    JWT_EXPIRY = datetime.timedelta(days=30)
+    JWT_LOGIN_EXPIRY = datetime.timedelta(days=30)
     # minutes to JWT expiry after user is sent verification email
     JWT_EMAIL_VERIFICATION_EXPIRY = datetime.timedelta(minutes=10)
 
@@ -19,6 +21,10 @@ class Config(object):
 
     DB_ECHO = False
 
+    LOG_FORMAT = '%(asctime)s-%(levelname)s:%(message)s'
+    LOG_FILENAME = f'{os.getcwd()}/logs/log.txt'
+    LOG_LEVEL = logging.INFO
+
 
 class ProductionConfig(Config):
     PEPPER = ''
@@ -26,7 +32,7 @@ class ProductionConfig(Config):
 
     DB_PASSWORD = ''
     DB_HOST = ''
-    DB_CONN_STRING = f'postgresql://postgres:{DB_PASSWORD}@{DB_HOST}:5432/hectordb'
+    DB_CONN_STRING = f''
 
     # email settings
     # If you are using real email, you need to find an smtp server you can use.
@@ -35,12 +41,17 @@ class ProductionConfig(Config):
     # sender email is ofc, who is sending this email
     # you're going to need SSL if its a real email server, and you will need to
     # use a password. When using gmail, I had to use an app password.
-    # apparently with outlook you can directly log in with you email + password combo
+    # apparently with outlook you can directly log in with you email +
+    # password combo
     SMTP_SERVER = ''
     SMTP_SERVER_PORT = 465
     SMTP_SENDER_EMAIL = ''
     SMTP_USE_SSL = True
     SMTP_SENDER_PASSWORD = ''
+
+    # If you have a domain name put it here,
+    # otherwise use the IP address of the server
+    BASE_ADDRESS = ''
 
 
 class DevelopmentConfig(Config):
@@ -48,12 +59,21 @@ class DevelopmentConfig(Config):
     JWT_SECRET = ''
 
     DB_PASSWORD = ''
-    DB_HOST = '127.0.0.1'
-    DB_CONN_STRING = f'postgresql://postgres:{DB_PASSWORD}@{DB_HOST}:5432/hectordb'
+    DB_HOST = ''
+    DB_CONN_STRING = f''
 
     # email settings
     SMTP_SERVER = ''
-    SMTP_SERVER_PORT = 1025
+    SMTP_SERVER_PORT = 465
     SMTP_SENDER_EMAIL = ''
-    SMTP_USE_SSL = False
+    SMTP_USE_SSL = True
     SMTP_SENDER_PASSWORD = ''
+
+
+class TestConfig(Config):
+    PEPPER = ''
+    JWT_SECRET = ''
+
+    DB_PASSWORD = ''
+    DB_HOST = ''
+    DB_CONN_STRING = f''
