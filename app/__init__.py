@@ -29,7 +29,7 @@ def init_db(db_conn_string: str, db_echo: bool) -> None:
     Base.metadata.create_all(engine)
 
 
-def seed_db_for_test(db):
+def seed_db_for_test(db) -> None:
     """
     This will clear out the entire database,
     and may fill it with dummy data.
@@ -65,7 +65,7 @@ def seed_db_for_test(db):
     trans.commit()
 
 
-def create_session():
+def create_session() -> Session:
     new_session = Session()
     return new_session
 

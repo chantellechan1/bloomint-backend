@@ -7,13 +7,13 @@ import time
 import os
 
 
-def get_flask_env():
-    global FlaskEnv
+class FlaskEnv(Enum):
+    PRODUCTION = 1
+    DEVELOPMENT = 2
+    TEST = 3
 
-    class FlaskEnv(Enum):
-        PRODUCTION = 1
-        DEVELOPMENT = 2
-        TEST = 3
+
+def get_flask_env() -> FlaskEnv:
 
     flask_env = os.environ.get('FLASK_ENV')
     if flask_env == 'test':
@@ -23,9 +23,7 @@ def get_flask_env():
     elif flask_env == 'production':
         return FlaskEnv.PRODUCTION
     else:
-        # default to development,
-        # it's safe
-        return FlaskEnv.DEVELOPMENT
+        raise Exception("FLASK_ENV is not set")
 
 
 def try_get_user_email(request) -> str:

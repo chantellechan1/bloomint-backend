@@ -16,7 +16,7 @@ if utils.get_flask_env() != utils.FlaskEnv.TEST:
         import ssl
         ssl_context = ssl.create_default_context()
 
-    def send_email(subject: str, body: str, recipient: str):
+    def send_email(subject: str, body: str, recipient: str) -> None:
         # This is the formatting required to make the
         # subject show up in the subject box
         message = f"Subject: {subject}\n\n{body}"
