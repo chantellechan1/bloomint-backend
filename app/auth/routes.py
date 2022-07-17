@@ -76,6 +76,7 @@ def create_user():
                                f"Click this link to verify your \
                                email address: {utils.get_base_address()}/static/authorize?jwt={jwt}",
                                email)
+            res = current_app.make_response(('success', HTTPStatus.OK))
         else:
             # When we run the test, it's too painful to set up the email stuff.
             # Just return the jwt in the response so they confirm their email
