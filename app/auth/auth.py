@@ -19,7 +19,7 @@ def login(request: Request) -> Response:
         models.User.email == email and models.User.deleted_at is None).first()
 
     if user is None:
-        raise Exception("Failed to find user")
+        raise Exception(f"Failed to find user {email}")
 
     if check_password_hash(user.hashed_password,
                            password + current_app.config['PEPPER']):
